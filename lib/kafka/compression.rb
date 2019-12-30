@@ -2,17 +2,23 @@
 
 require "kafka/snappy_codec"
 require "kafka/gzip_codec"
-require "kafka/lz4_codec"
-require "kafka/zstd_codec"
+
+unless RUBY_PLATFORM =~ /java/i
+  require "kafka/lz4_codec"
+  require "kafka/zstd_codec"
+end
 
 module Kafka
   module Compression
     CODECS_BY_NAME = {
-      :gzip => GzipCodec.new,
       :snappy => SnappyCodec.new,
-      :lz4 => LZ4Codec.new,
-      :zstd => ZstdCodec.new,
-    }.freeze
+    }.tap do |h|
+      unless RUBY_PLATFORM =~ /java/i
+        h[:gzip] = GzipCodec.new
+        h[:lz4] = LZ4Codec.new
+        h[:zstd] = ZstdCodec.new
+      end
+    end.freeze
 
     CODECS_BY_ID = CODECS_BY_NAME.each_with_object({}) do |(_, codec), hash|
       hash[codec.codec_id] = codec

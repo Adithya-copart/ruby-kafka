@@ -38,16 +38,24 @@ Gem::Specification.new do |spec|
   spec.add_development_dependency "rspec-benchmark"
   spec.add_development_dependency "activesupport", ">= 4.0", "< 6.1"
   spec.add_development_dependency "snappy"
-  spec.add_development_dependency "extlz4"
-  spec.add_development_dependency "zstd-ruby"
+
+  unless RUBY_PLATFORM =~ /java/i
+    spec.add_development_dependency "extlz4"
+    spec.add_development_dependency "zstd-ruby"
+  end
+
   spec.add_development_dependency "colored"
   spec.add_development_dependency "rspec_junit_formatter", "0.2.2"
   spec.add_development_dependency "dogstatsd-ruby", ">= 3.0.0", "< 5.0.0"
   spec.add_development_dependency "statsd-ruby"
   spec.add_development_dependency "prometheus-client", "~> 0.10.0"
-  spec.add_development_dependency "ruby-prof"
+
+  unless RUBY_PLATFORM =~ /java/i
+    spec.add_development_dependency "ruby-prof"
+    spec.add_development_dependency "stackprof"
+  end
+
   spec.add_development_dependency "timecop"
   spec.add_development_dependency "rubocop", "~> 0.49.1"
   spec.add_development_dependency "gssapi", ">= 1.2.0"
-  spec.add_development_dependency "stackprof"
 end

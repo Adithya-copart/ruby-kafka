@@ -198,45 +198,49 @@ describe Kafka::Protocol::RecordBatch do
   end
 
   let(:sample_record_batch_lz4_bytes) do
-    [
-      # First offset
-      0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
-      # Record Batch Length
-      0x0, 0x0, 0x0, 0x74,
-      # Partition Leader Epoch
-      0x0, 0x0, 0x0, 0x2,
-      # Magic byte
-      0x2,
-      # CRC
-      0x0, 0x0, 0x0, 0x0,
-      # Attributes
-      0x0, 0b00110011,
-      sample_record_batch_metadata_bytes,
-      Kafka::LZ4Codec.new.compress(
-        (record_1_bytes + record_2_bytes).pack("C*")
-      ).bytes
-    ].flatten
+    unless RUBY_PLATFORM =~ /java/i
+      [
+        # First offset
+        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
+        # Record Batch Length
+        0x0, 0x0, 0x0, 0x74,
+        # Partition Leader Epoch
+        0x0, 0x0, 0x0, 0x2,
+        # Magic byte
+        0x2,
+        # CRC
+        0x0, 0x0, 0x0, 0x0,
+        # Attributes
+        0x0, 0b00110011,
+        sample_record_batch_metadata_bytes,
+        Kafka::LZ4Codec.new.compress(
+          (record_1_bytes + record_2_bytes).pack("C*")
+        ).bytes
+      ].flatten
+    end
   end
 
   let(:sample_record_batch_zstd_bytes) do
-    [
-      # First offset
-      0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
-      # Record Batch Length
-      0x0, 0x0, 0x0, 0x6a,
-      # Partition Leader Epoch
-      0x0, 0x0, 0x0, 0x2,
-      # Magic byte
-      0x2,
-      # CRC
-      0x0, 0x0, 0x0, 0x0,
-      # Attributes
-      0x0, 0b00110100,
-      sample_record_batch_metadata_bytes,
-      Kafka::ZstdCodec.new.compress(
-        (record_1_bytes + record_2_bytes).pack("C*")
-      ).bytes
-    ].flatten
+    unless RUBY_PLATFORM =~ /java/i
+      [
+        # First offset
+        0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x1,
+        # Record Batch Length
+        0x0, 0x0, 0x0, 0x6a,
+        # Partition Leader Epoch
+        0x0, 0x0, 0x0, 0x2,
+        # Magic byte
+        0x2,
+        # CRC
+        0x0, 0x0, 0x0, 0x0,
+        # Attributes
+        0x0, 0b00110100,
+        sample_record_batch_metadata_bytes,
+        Kafka::ZstdCodec.new.compress(
+          (record_1_bytes + record_2_bytes).pack("C*")
+        ).bytes
+      ].flatten
+    end
   end
 
   context '#encode' do
@@ -287,7 +291,9 @@ describe Kafka::Protocol::RecordBatch do
     context 'Compress with LZ4' do
       let(:codec_id) { 3 }
 
-      it 'encodes the record batch using snappy compressor' do
+      it 'encodes the record batch using lz4 compressor' do
+        skip if RUBY_PLATFORM =~ /java/i
+
         sample_record_batch.encode(encoder)
         expect(strip_crc(buffer.string.bytes)).to eql sample_record_batch_lz4_bytes
       end
@@ -297,6 +303,8 @@ describe Kafka::Protocol::RecordBatch do
       let(:codec_id) { 4 }
 
       it 'encodes the record batch using zstd compressor' do
+        skip if RUBY_PLATFORM =~ /java/i
+
         sample_record_batch.encode(encoder)
         expect(strip_crc(buffer.string.bytes)).to eql sample_record_batch_zstd_bytes
       end
@@ -368,6 +376,8 @@ describe Kafka::Protocol::RecordBatch do
       end
 
       it 'decodes records with LZ4 decompressor' do
+        skip if RUBY_PLATFORM =~ /java/i
+
         record_batch = Kafka::Protocol::RecordBatch.decode(decoder)
         expect_matched_batch_metadata(record_batch)
         expect_matched_records(record_batch.records)
@@ -380,6 +390,8 @@ describe Kafka::Protocol::RecordBatch do
       end
 
       it 'decodes records with Zstd decompressor' do
+        skip if RUBY_PLATFORM =~ /java/i
+
         record_batch = Kafka::Protocol::RecordBatch.decode(decoder)
         expect_matched_batch_metadata(record_batch)
         expect_matched_records(record_batch.records)
@@ -389,6 +401,8 @@ describe Kafka::Protocol::RecordBatch do
 end
 
 def byte_array_to_io(bytes)
+  return unless bytes
+
   str = bytes.map { |byte| [byte].pack("C") }.join("")
   StringIO.new(str)
 end
